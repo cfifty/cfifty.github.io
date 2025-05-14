@@ -1,0 +1,194 @@
+<!DOCTYPE HTML>
+<!--
+	Strata by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+<head>
+    <title>Understanding RLHF as a non-RL Researcher | Chris Fifty</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+    <link rel="stylesheet" href="../assets/css/main.css"/>
+    <link rel="stylesheet" href="../assets/css/custom.css"/>
+</head>
+<body class="is-preload">
+
+<!-- Header -->
+<header id="header">
+    <div class="inner">
+        <a href="../index.html" class="image avatar"><img src="../images/main.jpg" alt=""/></a>
+        <p><i>If you can't reach the stars</i>, <br/>
+            <i>then raise the earth</i>.</p>
+        <div class="line-break"></div>
+        <nav id="sidebar">
+            <ul>
+                <li><a href="../index.html#timeline-section">About</a></li>
+                <li><a href="../index.html#news">News</a></li>
+                <li><a href="../index.html#publications">Publications</a></li>
+                <li><a href="../index.html#research-highlights">Writings</a></li>
+                <li><a href="../index.html#projects">Projects</a></li>
+                <li><a href="../index.html#misc">Misc.</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<!-- Main -->
+<div id="main">
+    <section>
+        <header class="major">
+            <h1>Understanding RLHF as a non-RL Researcher</h1>
+            <p>April, 2024 • 10 min read</p>
+        </header>
+        
+        <p>
+            <span class="image right"><img src="../images/rlhf.png" alt="RLHF Training Pipeline" /></span>
+            Reinforcement Learning from Human Feedback (RLHF) has become the cornerstone of modern large language model (LLM) alignment, responsible for the impressive abilities of systems like ChatGPT, Claude, and others. Despite its prominence, RLHF can be intimidating to understand if you don't have a background in reinforcement learning. This post aims to demystify RLHF by explaining it in terms that even researchers without RL expertise can grasp.
+        </p>
+
+        <h2>What is RLHF?</h2>
+        
+        <p>
+            At its core, RLHF is a method for teaching language models to produce outputs that humans prefer. It's a three-stage process:
+        </p>
+        
+        <ol>
+            <li><strong>Stage 1: Supervised Fine-Tuning (SFT)</strong> - Starting with a pretrained language model, we fine-tune it on demonstrations of the desired behavior.</li>
+            <li><strong>Stage 2: Reward Model Training</strong> - We collect human preferences (which of two responses is better?) and train a reward model to predict these preferences.</li>
+            <li><strong>Stage 3: Reinforcement Learning</strong> - We use the reward model to further optimize the language model through a reinforcement learning algorithm.</li>
+        </ol>
+
+        <h2>RLHF Without the RL Jargon</h2>
+        
+        <p>
+            Let's break down the RL component which tends to be the most intimidating part:
+        </p>
+        
+        <h3>The Intuition Behind Proximal Policy Optimization (PPO)</h3>
+        
+        <p>
+            PPO, the RL algorithm commonly used in RLHF, can be viewed more simply as a careful optimization process:
+        </p>
+        
+        <ol>
+            <li><strong>Generate responses</strong> with your current model for a set of prompts</li>
+            <li><strong>Evaluate these responses</strong> using the reward model</li>
+            <li><strong>Update your model</strong> to make high-reward responses more likely and low-reward responses less likely</li>
+            <li><strong>Add a constraint</strong> to prevent your model from changing too drastically (this is the "proximal" part)</li>
+        </ol>
+        
+        <p>
+            The key insight is that we're not trying to directly maximize the reward; we're trying to shift the probability distribution of the model outputs toward more rewarding sequences while maintaining the general capabilities of the model.
+        </p>
+
+        <h3>The KL Penalty: Keeping the Model on Track</h3>
+        
+        <p>
+            One crucial aspect of RLHF is the KL (Kullback-Leibler) divergence penalty. This is a mathematical way of saying "don't stray too far from your original model." Without this constraint, the optimization might find degenerate solutions—like always outputting a specific high-reward phrase regardless of the prompt.
+        </p>
+        
+        <p>
+            You can think of the KL penalty as a guardrail that ensures the model remains general-purpose while improving on the dimensions we care about.
+        </p>
+
+        <h2>What RLHF is Actually Optimizing</h2>
+        
+        <p>
+            The actual objective function in RLHF includes three components:
+        </p>
+        
+        <ol>
+            <li>Maximizing the predicted reward from the reward model</li>
+            <li>Minimizing divergence from the original SFT model to preserve general capabilities</li>
+            <li>Occasionally, additional auxiliary objectives like ensuring response diversity</li>
+        </ol>
+        
+        <p>
+            The magic happens in balancing these objectives—too much reward-seeking without constraints leads to degenerate, repetitive outputs, while too much constraint prevents meaningful improvement.
+        </p>
+
+        <h2>Common Misconceptions</h2>
+        
+        <p>Here are some common misunderstandings about RLHF:</p>
+        
+        <ul>
+            <li><strong>RLHF directly uses human feedback during training</strong> - In reality, the human feedback is used to train a reward model, which then guides the RL process.</li>
+            <li><strong>RLHF is learning from sequences of actions</strong> - Unlike traditional RL settings with state-action sequences, RLHF typically learns from the rewards of entire sequences (complete responses).</li>
+            <li><strong>RLHF is simply optimizing for high rewards</strong> - As we've seen, RLHF includes constraints to maintain the model's original capabilities.</li>
+        </ul>
+
+        <h2>Simplifying Further: RLHF as Specialized Fine-tuning</h2>
+        
+        <p>
+            If you're familiar with standard fine-tuning but not RL, you can think of RLHF as a specialized fine-tuning process where:
+        </p>
+        
+        <ul>
+            <li>Instead of using explicit examples, we use a reward signal to guide learning</li>
+            <li>Instead of a fixed training set, the model generates its own training examples</li>
+            <li>The objective combines improving specific behaviors while preserving general capabilities</li>
+        </ul>
+        
+        <p>
+            While this is a simplification, it helps bridge the conceptual gap for those coming from supervised learning backgrounds.
+        </p>
+
+        <h2>Alternatives to RLHF</h2>
+        
+        <p>
+            If you find RLHF too complex, there are simpler alternatives that have shown promising results:
+        </p>
+        
+        <ul>
+            <li><strong>Direct Preference Optimization (DPO)</strong> - A method that eliminates the need for a separate reward model and RL optimization</li>
+            <li><strong>Reject Sampling</strong> - Generate multiple responses and select the one with the highest reward</li>
+            <li><strong>Constitutional AI</strong> - Uses self-critique and revision rather than direct optimization</li>
+        </ul>
+        
+        <p>
+            These approaches often provide computational benefits and can be easier to implement while still capturing much of what makes RLHF effective.
+        </p>
+
+        <h2>Conclusion</h2>
+        
+        <p>
+            RLHF, while built on reinforcement learning principles, can be understood without deep RL expertise. At its core, it's about carefully shifting model behavior toward human preferences while maintaining the model's general capabilities.
+        </p>
+        
+        <p>
+            Whether you're a researcher looking to implement RLHF or simply trying to understand how modern LLMs are trained, I hope this explanation helps demystify one of the most important techniques in current AI alignment.
+        </p>
+    </section>
+</div>
+
+<!-- Footer -->
+<footer id="footer">
+    <div class="inner">
+        <ul class="icons">
+            <li><a href="https://twitter.com" class="icon brands fa-twitter" target="_blank"><span
+                    class="label">Twitter</span></a></li>
+            <li><a href="https://github.com/cfifty" class="icon brands fa-github" target="_blank"><span class="label">Github</span></a>
+            </li>
+            <li><a href="mailto:cjf92@cornell.edu" class="icon solid fa-envelope"><span class="label">Email</span></a>
+            </li>
+        </ul>
+        <ul class="copyright">
+            <li>&copy; Chris Fifty</li>
+            <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+        </ul>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="../assets/js/jquery.min.js"></script>
+<script src="../assets/js/jquery.poptrox.min.js"></script>
+<script src="../assets/js/browser.min.js"></script>
+<script src="../assets/js/breakpoints.min.js"></script>
+<script src="../assets/js/jquery.scrollex.min.js"></script>
+<script src="../assets/js/jquery.scrolly.min.js"></script>
+<script src="../assets/js/util.js"></script>
+<script src="../assets/js/main.js"></script>
+
+</body>
+</html> 

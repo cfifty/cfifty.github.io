@@ -1,3 +1,152 @@
+:root {
+    --silver: #bfc1c2;
+    --bronze: #cd7f32;
+    --onyx: #353535;
+    --timeline-width: 3px;
+    --dot-size: 16px;
+    --timeline-axis-offset: 15px; /* Distance from .timeline left edge to the center of the line/dots */
+    --timeline-content-start-padding: 25px; /* Drastically reduced from 45px to bring content much closer to the vertical line */
+  }
+  
+  #timeline-section {
+    margin-bottom: 2em; /* Add space between timeline section and news section */
+    padding-bottom: 2em; /* Add padding at the bottom of the section */
+  }
+  
+  .timeline {
+    position: relative;
+    margin: 60px auto 0; /* Remove bottom margin since we're controlling it at the section level */
+    padding-left: var(--timeline-content-start-padding);
+    width: 100%; /* Make timeline stretch full width */
+    max-width: 100%; /* Remove max-width restriction */
+  }
+  
+  .timeline::before { /* The Line */
+    content: '';
+    position: absolute;
+    left: var(--timeline-axis-offset); /* Position the line's center on the axis */
+    transform: translateX(-50%); /* Center the line element itself */
+    top: 0;
+    bottom: 30px; /* Stop the line a bit before the bottom to avoid it extending too far */
+    width: var(--timeline-width);
+    background: linear-gradient(to bottom, var(--silver), var(--bronze), var(--onyx));
+    border-radius: 2px;
+    z-index: 0; /* Behind dots */
+  }
+  
+  .timeline-event {
+    position: relative;
+    margin-bottom: 48px;
+    min-height: 40px; /* Ensures space for the dot even if content is minimal */
+  }
+  
+  .timeline-dot {
+    position: absolute;
+    /* .timeline-event starts at --timeline-content-start-padding (60px) from .timeline left. */
+    /* We want dot's center at --timeline-axis-offset (20px) from .timeline left. */
+    /* So, relative to .timeline-event, dot's center is at: --timeline-axis-offset - --timeline-content-start-padding */
+    left: calc(var(--timeline-axis-offset) - var(--timeline-content-start-padding)); /* e.g., 20px - 60px = -40px */
+    transform: translateX(-50%); /* Center the dot element on its calculated 'left' position */
+    top: 0; /* Aligns top of dot with top of .timeline-event content area */
+    width: var(--dot-size);
+    height: var(--dot-size);
+    border-radius: 50%;
+    background-color: var(--silver); /* Default dot fill color */
+    border: 2px solid var(--silver); /* Default border color */
+    box-shadow: 0 2px 8px rgba(53,53,53,0.08);
+    z-index: 1; /* Above the line */
+    transition: border-color 0.3s, background-color 0.3s;
+  }
+  
+  .timeline-event.bronze .timeline-dot { 
+    border-color: var(--bronze);
+    background-color: var(--bronze);
+  }
+  
+  .timeline-event.onyx .timeline-dot { 
+    border-color: var(--onyx);
+    background-color: var(--onyx);
+  }
+  /* .timeline-event.silver .timeline-dot will use the default silver border */
+  
+  .timeline-date {
+    position: absolute;
+    left: calc(var(--timeline-axis-offset) - var(--timeline-content-start-padding) - 45px); /* Moved further left to add spacing */
+    top: calc((var(--dot-size) / 2) - 14px); /* Moved up more to better center with the dot */
+    width: 35px; /* Width for date text */
+    font-size: 0.95em;
+    color: var(--onyx);
+    opacity: 0.7;
+    letter-spacing: 1px;
+    text-align: right; /* Right-align dates for better alignment with the timeline */
+    padding-right: 15px; /* Increased spacing between date and timeline */
+  }
+  
+  .timeline-content {
+    /* This margin was from your preferred "minimalistic" version. */
+    /* It's relative to the start of .timeline-event (which is already offset by --timeline-content-start-padding) */
+    margin-left: 2px; /* Drastically reduced from 10px to move content very close to the vertical line */
+    padding: 8px 0 8px 5px; /* Reduced left padding from 15px to 5px */
+    display: flex; /* Use flexbox for image and text layout */
+    gap: 15px; /* Space between image and text */
+  }
+  
+  .timeline-image {
+    width: 80px; /* Reduced from 120px */
+    height: 80px; /* Reduced from 120px */
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0; /* Prevent image from shrinking */
+  }
+  
+  .timeline-text {
+    flex: 1; /* Allow text to take remaining space */
+  }
+  
+  .timeline-desc {
+    font-size: 1em;
+    color: var(--onyx);
+    opacity: 0.8;
+    margin-top: 2px;
+  }
+  
+  @media (max-width: 768px) {
+    :root {
+      /* Adjust offsets for smaller screens if needed */
+      --timeline-axis-offset: 25px; /* Adjusted for mobile */
+      --timeline-content-start-padding: 35px; /* Adjusted for mobile */
+    }
+    .timeline {
+      /* padding-left is already variable, will adjust */
+      width: 100%; /* Full width on mobile */
+      padding-left: var(--timeline-content-start-padding); /* Use variable for consistency */
+    }
+    .timeline-content {
+      margin-left: 2px; /* Keep consistent with desktop */
+      padding: 8px 0 8px 5px; /* Keep consistent with desktop */
+      flex-direction: column; /* Stack image and text on mobile */
+    }
+    .timeline-image {
+      width: 60px; /* Smaller on mobile */
+      height: 60px;
+      margin-bottom: 10px;
+    }
+    .timeline-dot {
+      width: 12px; /* Smaller dots on mobile */
+      height: 12px;
+      border-width: 2px; /* Keep border consistent */
+      /* 'left' and 'transform' will adjust automatically due to variables */
+    }
+    .timeline-date {
+      left: 0; /* Adjust position on mobile */
+      top: calc((var(--dot-size) / 2) - 9px); /* Adjusted for mobile to match desktop centering */
+      width: 20px; /* Narrower width on mobile */
+      font-size: 0.8em; /* Smaller font size on mobile */
+      padding-right: 8px; /* Smaller padding on mobile */
+    }
+    /* .timeline::before 'left' and 'transform' also adjust automatically */
+  }
+
 .line-break {
     width: 15%;
     height: 2px;
@@ -67,5 +216,17 @@
 
 #header  > .inner > nav > ul > li a.active {
     color: #ffffff;
+}
+
+/*   Thumbnails   */
+img.thumbnail {
+    max-width: 100px;
+    max-height: 100px;
+    object-fit: cover;
+}
+
+/* Links */
+a {
+    color: #6666ff;
 }
 

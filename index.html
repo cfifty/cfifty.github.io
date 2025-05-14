@@ -23,11 +23,11 @@
         <div class="line-break"></div>
         <nav id="sidebar">
             <ul>
-                <li><a href="#about">About</a></li>
-                <li><a href="#news">News</a></li>
-                <li><a href="#invited-talks">Invited Talks</a></li>
+                <li><a href="#timeline-section">About</a></li>
+                <!-- <li><a href="#news">News</a></li> -->
+                <!-- <li><a href="#invited-talks">Invited Talks</a></li> -->
+                <li><a href="#research-highlights">Writings</a></li>
                 <li><a href="#publications">Publications</a></li>
-                <li><a href="#research-highlights">Research Highlights</a></li>
                 <li><a href="#projects">Projects</a></li>
                 <li><a href="#misc">Misc.</a></li>
             </ul>
@@ -38,26 +38,97 @@
 <!-- Main -->
 <div id="main">
 
-    <!-- One -->
-    <section id="about">
-        <header class="major">
-            <h2>Chris Fifty</h2>
-        </header>
-        <p>I am a PhD student at Stanford University advised by <a href="http://robots.stanford.edu/">Sebastian
-            Thrun</a> and <a href="https://cs.stanford.edu/~chrismre/">Christopher Ré</a>. Previously, I worked as a
-            researcher at <a href="https://research.google/teams/brain/">Google Brain</a>, and before Google, I obtained
-            my bachelors and masters from Cornell University while working in the research lab of <a
-                    href="https://www.cs.cornell.edu/~kilian/">Kilian Weinberger</a>.</p>
-        <p>My goal is to advance research at the intersection of machine learning and the biological sciences. Advances
-            in this domain will lead to the eradication of dementia, reduce the debilitating effects of cancer, and even
-            significantly extend our natural lifespan and healthy years of life.</p>
-        <p><a href="https://scholar.google.com/citations?user=lg2M2RYAAAAJ&hl=en">Google Scholar</a> / <a
-                href="papers/cv.pdf" target="_blank">CV</a> / <a href="https://www.linkedin.com/in/christopher-fifty/">LinkedIn</a>
-            / <a href="https://github.com/cfifty">Github</a></p>
+    <section id="timeline-section">
+    <header class="major">
+        <h2>Chris Fifty</h2>
+    </header>
+    <p><a href="https://scholar.google.com/citations?user=lg2M2RYAAAAJ&hl=en">Google Scholar</a> / <a
+        href="papers/cv.pdf" target="_blank">CV</a> / <a href="https://www.linkedin.com/in/christopher-fifty/">LinkedIn</a>
+    / <a href="https://github.com/cfifty">Github</a></p>
+      <div class="timeline">
+        <div class="timeline-event silver">
+          <div class="timeline-date">2025</div>
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <img src="images/stanford_logo.jpg" alt="Stanford University" class="timeline-image">
+            <div class="timeline-text">
+              <div class="timeline-desc">Graduated with a PhD in Computer Science from Stanford University in 2.5 years (department record). Advised by <a href="http://robots.stanford.edu/">Sebastian
+                Thrun</a> and <a href="https://cs.stanford.edu/~chrismre/">Christopher Ré</a>. Affiliated with <a href="https://ai.stanford.edu/">SAIL</a> and <a href="http://statsml.stanford.edu/">the Stanford Machine Learning Group</a>.
+                <br><br>
+                Non-inclusive set of personal highlights:
+                <ul>
+                  <li>First-author ICLR 2025 Oral publication (top 1.8% of papers).</li>
+                  <li>Stanford Triathlon club; competed in collegiate triathlon nationals & ran a 70.3 ironman.</li>
+                  <li>Took the math courses I wish I had in undergrad (i.e. honors analysis, topology, differential geometry, information theory, etc.).</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-event bronze">
+          <div class="timeline-date">2022</div>
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <img src="images/google_brain.png" alt="Google Brain" class="timeline-image">
+            <div class="timeline-text">
+              <div class="timeline-desc">Research engineer at Google Brain on the Babelfish team specilizaing in multi-modal learning (image, video, audio, language).
+                <br><br>Some highlights:
+                <ul>
+                  <li>One of the youngest full-timers within Google Brain.</li>
+                  <li>First-author NeurIPS 2021 spotlight publication (top 2.8%).</li>
+                  <li>Built out the first deep learning content understanding models for YouTube videos.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-event onyx">
+          <div class="timeline-date">2018</div>
+          <div class="timeline-dot"></div>
+          <div class="timeline-content">
+            <img src="images/cornell_logo.png" alt="Cornell University" class="timeline-image">
+            <div class="timeline-text">
+              <div class="timeline-desc">Bachelor's and Masters of Engineering from Cornell University in Computer Science. External specilization in mathematics. I worked in the research lab of <a href="https://www.cs.cornell.edu/~kilian/">Kilian Weinberger</a> and published an ICML paper on Graph Neural Networks.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+        <!-- Five -->
+    <section id="research-highlights">
+        <h2>Writings</h2>
+        <!-- <section>
+            <header>
+                <h4><a href="writings/rlhf.html">Understanding RLHF as a non-RL Researcher</a></h4>
+            </header>
+            <p><span class="image left"><img src="images/rlhf.png" alt="RLHF Diagram"/></span>
+            Reinforcement Learning from Human Feedback (RLHF) has become the cornerstone of modern large language model alignment. In this article, I break down how RLHF works without requiring a deep background in reinforcement learning, making it accessible to researchers from all backgrounds. Learn about the three-stage process, common misconceptions, and simpler alternatives that have emerged in recent research.</p>
+        </section> -->
+        <section>
+            <header><h4>Personal Course Notes during my PhD</h4></header>
+            <ul>
+                <li><a href="lecture_notes/Math_171.pdf">Math 171: Fundamental Concepts of Analysis
+                <li><a href="lecture_notes/Math_143.pdf">Math 143: Differential Geometry</a></li>
+                <li><a href="lecture_notes/Math_120.pdf">Math 120: Groups and Rings</a></li>
+                <li><a href="lecture_notes/EE_276.pdf">EE 276: Information Theory</a></li>
+                <li><a href="lecture_notes/EE_364M.pdf">EE 364M: Mathematics for Convex Optimization Lecture Notes</a></li>
+            </ul>
+        </section>
+        <section>
+            <header>
+                <h4><a href="https://ai.googleblog.com/2021/10/deciding-which-tasks-should-train.html">[Google AI Blog] Efficiently
+                    Identifying Task Groupings for Multi-Task Learning (NeurIPS 2021)</a></h4>
+            </header>
+            <p><span class="image left"><img src="images/tag.gif" alt=""/></span>We suggest an approach to select which
+                tasks should train together in multi-task learning models. Our method determines task groupings in a
+                single training run by co-training all tasks together and quantifying the effect to which one task's
+                gradient would affect another task's loss.</p>
+        </section>
     </section>
 
     <!-- Two -->
-    <section id="news">
+    <!-- <section id="news">
         <h2>News</h2>
         <section>
             <ul class="alt">
@@ -86,21 +157,7 @@
                 </li>
             </ul>
         </section>
-    </section>
-
-    <!-- Three -->
-    <section id="invited-talks">
-        <h2>Invited Talks</h2>
-        <ul>
-            <li>In October 2021, I gave a talk to <a href="https://level-5.global/">Level 5</a> (formerly Lyft's
-                self-driving division, now part of Toyota's) regarding multi-task learning for autonomous vehicles.
-            </li>
-            <li>In March 2021, I was invited by <a href="https://waymo.com/">Waymo Research</a> to give a talk on
-                information transfer in multi-task learning systems.
-            </li>
-        </ul>
-    </section>
-    </section>
+    </section> -->
 
     <!-- Four -->
     <section id="publications">
@@ -115,7 +172,7 @@
 				<a href="https://sites.google.com/view/eamid/">Ehsan Amid</a>,
 				<a href="http://robots.stanford.edu/">Sebastian Thrun</a>,
 				<a href="https://cs.stanford.edu/~chrismre/">Christopher Ré</a><br/>
-				<i>International Conference on Learning Representations (ICLR)</i>, 2025 <span style="color:blue;">(Oral)</span><br/>
+				<i>International Conference on Learning Representations (ICLR)</i>, 2025 <span style="color:#f4545c;">(Oral Award)</span><br/>
 				<a href="https://arxiv.org/abs/2410.06424">arXiv</a> / <a
 						href="https://github.com/cfifty/rotation_trick">code</a> / <a
 						href="https://www.youtube.com/watch?v=VYM8-u0BzRE">video</a>
@@ -133,47 +190,6 @@
 						href="https://github.com/cfifty/CAML">code</a> / <a
 						href="https://www.youtube.com/watch?v=tu_wItToeXY&t=6s">video</a>
 			</p>
-            <p class='publications'><a
-                    href="https://www.mlsb.io/papers_2023/Implicit_Geometry_and_Interaction_Embeddings_Improve_Few-Shot_Molecular_Property_Prediction.pdf">Implicit
-                Geometry and Interaction Embeddings Improve Few-Shot Molecular Property Prediction</a><br/>
-                <strong>Christopher Fifty</strong>, <a
-                        href="https://scholar.google.com/citations?user=0epEAl8AAAAJ&hl=en">Joseph M. Paggi</a>, <a
-                        href="https://sites.google.com/view/eamid/">Ehsan Amid</a>, <a
-                        href="https://cs.stanford.edu/people/jure/">Jure Leskovec</a>, <a
-                        href="https://drorlab.stanford.edu/people.html">Ron O. Dror</a><br/>
-                <i>Neural Information Processing Systems (NeurIPS)</i>, 2023<br/>
-                <i>Machine Learning for Structural Biology Workshop</i><br/>
-                <a href="https://arxiv.org/abs/2302.02055">arXiv</a> / <a
-                        href="https://github.com/cfifty/ignite">code</a>
-            </p>
-
-            <p class='publications'><a href="https://arxiv.org/pdf/2207.06366.pdf">Layerwise Bregman Representation
-                Learning with Applications to Knowledge Distillation</a><br/>
-                <a href="https://sites.google.com/view/eamid/">Ehsan Amid</a>, <a
-                        href="https://scholar.google.com/citations?user=Mv71-IcAAAAJ&hl=en">Rohan Anil</a>, <strong>Christopher
-                    Fifty</strong>, <a href="https://en.wikipedia.org/wiki/Manfred_K._Warmuth">Manfred K
-                    Warmuth</a><br/>
-                <i>Transactions on Machine Learning Research (TMLR)</i>, 2021<br/>
-                <a href="https://arxiv.org/pdf/2209.07080.pdf">arXiv</a></p>
-
-            <p class='publications'><a href="https://arxiv.org/pdf/2207.06366.pdf">N-Grammer: Augmenting Transformers
-                with latent n-grams</a><br/>
-                <a href="https://sites.google.com/site/royaurko/">Aurko Roy</a>, <a
-                        href="https://scholar.google.com/citations?user=Mv71-IcAAAAJ&hl=en">Rohan Anil</a>,..., <strong>Christopher
-                    Fifty</strong>, ..., <a href="https://www.linkedin.com/in/yonghui-wu-65bb7521">Yonghui Wu</a><br/>
-                <i>arXiv preprint</i>, 2021<br/>
-                <a href="https://arxiv.org/pdf/2207.06366.pdf">arXiv</a></p>
-
-            <p class='publications'><a href="https://arxiv.org/pdf/2112.07175.pdf">Co-training Transformer with Videos
-                and Images Improves Action Recognition</a><br/>
-                <a href="https://zbwglory.github.io/">Bowen Zhang</a>, <a href="https://jiahuiyu.com/">Jiahui Yu</a>,
-                <strong>Christopher Fifty</strong>, <a
-                        href="https://scholar.google.com/citations?hl=en&user=RNdGVHoAAAAJ">Wei Han</a>, <a
-                        href="https://scholar.google.com/citations?hl=en&user=2r2NuDAAAAAJ">Andrew Dai</a>, <a
-                        href="https://scholar.google.com/citations?user=1fsmwB8AAAAJ&hl">Ruoming Pang</a>, <a
-                        href="https://viterbi-web.usc.edu/~feisha/">Fei Sha</a><br/>
-                <i>arXiv preprint</i>, 2021<br/>
-                <a href="https://arxiv.org/abs/2112.07175">arXiv</a></p>
 
             <p class='publications'><a href="https://arxiv.org/pdf/2109.04617.pdf">Efficiently Identifying Task
                 Groupings for Multi-Task Learning</a><br/>
@@ -183,7 +199,7 @@
                         href="https://cs.stanford.edu/~tianheyu/">Tianhe Yu</a>, <a
                         href="https://scholar.google.com/citations?user=Mv71-IcAAAAJ&hl=en">Rohan Anil</a>, <a
                         href="https://ai.stanford.edu/~cbfinn/">Chelsea Finn</a><br/>
-                <i>Neural Information Processing Systems (NeurIPS)</i>, 2021 <span style="color:red;">(Spotlight)</span><br/>
+                <i>Neural Information Processing Systems (NeurIPS)</i>, 2021 <span style="color:#008000;">(Spotlight Award)</span><br/>
                 <a href="https://arxiv.org/abs/2109.04617">arXiv</a> / <a
                         href="https://github.com/google-research/google-research/tree/master/tag">code</a> / <a
                         href="https://ai.googleblog.com/2021/10/deciding-which-tasks-should-train.html">blog</a></p>
@@ -194,22 +210,11 @@
                         href="https://scholar.google.com/citations?user=Mv71-IcAAAAJ&hl=en">Rohan Anil</a>, <strong>Christopher
                     Fifty</strong>, <a href="https://mwarmuth.bitbucket.io/">Manfred K Warmuth</a><br/>
                 <i>International Conference on Machine Learning (ICML)</i>, 2020<br/>
-                <i>Beyond First Order Methods in Machine Learning Systems Workshop</i> <span style="color:red;">(Spotlight)</span><br/>
+                <i>Beyond First Order Methods in Machine Learning Systems Workshop</i> <span style="color:#008000;">(Spotlight Award)</span><br/>
                 <a href="https://users.soe.ucsc.edu/~eamid/paps/funnel_ws.pdf">arXiv</a></p>
 
-            <p class='publications'><a href="https://arxiv.org/pdf/2008.05808.pdf">Can Small Heads Help? Understanding
-                and Improving Multi-Task Generalization</a><br/>
-                <a href="https://scholar.google.com/citations?user=s42s76IAAAAJ&hl=en">Yuyan Wang</a>, <a
-                        href="http://www-personal.umich.edu/~zhezhao/">Zhe Zhao</a>, <a
-                        href="https://sites.google.com/site/daibohr/">Bo Dai</a>, <strong>Christopher Fifty</strong>, <a
-                        href="https://www.linkedin.com/in/dong-lin-3b02211/">Dong Lin</a>, <a
-                        href="https://scholar.google.com/citations?user=20Y73oIAAAAJ&hl=en">Lichan Hong</a>, <a
-                        href="https://sites.google.com/view/edchi//">Ed Chi</a><br/>
-                <i>Proceedings of The Web Conference (WWW)</i>, 2022<br/>
-                <a href="https://arxiv.org/abs/2008.05808">arXiv</a></p>
-
-            <p class='publications'><a href="http://proceedings.mlr.press/v97/wu19e.html">Simplifying graph
-                convolutional networks</a><br/>
+            <p class='publications'><a href="http://proceedings.mlr.press/v97/wu19e.html">Simplifying Graph
+                Convolutional Networks</a><br/>
                 <a href="https://sites.google.com/view/felixwu/home">Felix Wu</a>, <a href="https://amauriholanda.org/">Amauri
                     Souza</a>, <a href="https://tiiiger.github.io/">Tianyi Zhang</a>, <strong>Christopher Fifty</strong>,
                 <a href="http://www.cs.cornell.edu/~tyu/">Tao Yu</a>, <a href="https://www.cs.cornell.edu/~kilian/">Kilian
@@ -218,38 +223,6 @@
                 <a href="https://arxiv.org/abs/1902.07153">arXiv</a> / <a href="https://github.com/Tiiiger/SGC">code</a>
             </p>
 
-            <p class='publications'><a
-                    href="https://www.infona.pl/resource/bwmeta1.element.elsevier-f657f27e-f290-3d73-ad91-6309a30042f4">Broad-spectrum
-                detection of all clostridial neurotoxins in stem cell‒derived neurons and identification of compounds
-                that rescue synaptic activity in synaptic function‒based assays</a><br/>
-                Patrick McNutt, Michael Adler, Megan Lyman, Angela Adkins, <strong>Christopher Fifty</strong>, Phillip
-                Beske<br/>
-                <i>Toxicon</i>, 2015</p>
-        </section>
-    </section>
-
-    <!-- Five -->
-    <section id="research-highlights">
-        <h2>Research Highlights</h2>
-        <section>
-            <header>
-                <h4><a href="https://ai.googleblog.com/2021/10/deciding-which-tasks-should-train.html">Efficiently
-                    Identifying Task Groupings for Multi-Task Learning (NeurIPS 2021)</a></h4>
-            </header>
-            <p><span class="image left"><img src="images/tag.gif" alt=""/></span>We suggest an approach to select which
-                tasks should train together in multi-task learning models. Our method determines task groupings in a
-                single training run by co-training all tasks together and quantifying the effect to which one task's
-                gradient would affect another task's loss.</p>
-        </section>
-        <section>
-            <header>
-                <h4><a href="https://arxiv.org/abs/2109.04617">Simplifying Graph Convolutional Networks (ICML 2019)</a>
-                </h4>
-            </header>
-            <p><span class="image left"><img src="images/gcn5.jpg" alt=""/></span>GCNs derive inspiration primarily from
-                recent deep learning approaches, and as a result, may inherit unnecessary complexity and redundant
-                computation. In this paper, we reduce this excess complexity through successively removing
-                nonlinearities and collapsing weight matrices between consecutive layers. </p>
         </section>
     </section>
 
@@ -282,35 +255,21 @@
                 content focusing on TensorFlow, hardware, and Natural Language Processing. My channel has around 75
                 subscribers, over 10,000 views, and around 330 hours of watch time.<br/><br/><br/></p>
         </section>
-        <section>
-            <header>
-                <h4><a href="https://github.com/cfifty/numpyGCN">Numpy GCN</a></h4>
-            </header>
-            <p><span class="image left"><img src="images/numpy_gcn.png" alt=""/></span>Along with Danny Qiu and Alex
-                Libman, I implemented a Graph Convolutional Network in Numpy. In particular, we derive and implement the
-                backpropagation learning steps using only numpy primitives and without reliance on autograd. Our class
-                writeup for CS 6787, Advanced Machine Learning Systems, also includes experiments with network
-                compression on Numpy GCN layers using the hashing trick. This class was taught by Professor Chris De Sa
-                at Cornell University in 2018.</p>
-        </section>
-        <section>
-            <header>
-                <h4><a href="https://drive.google.com/file/d/1T2Wo5pu2klclR3hZs9ti-Tduxiwljg4A/view?usp=sharing">LFG,
-                    MOB BAF: Propagation of Video Game Terminology Throughout Reddit</a></h4>
-            </header>
-            <p><span class="image left"><img src="images/terminology.png" alt=""/></span>Along with Katherine Van
-                Koevering, I exaimed the propagation of video game terminology across different subreddits.
-                Specifically, we examined the phenomenon of a term originating in one subreddit and later transfering
-                and being incorporated into the jargond of other (related) subreddits. This report was the final project
-                of CS 6742, Natural Language Processing and Social Interaction, taught by Professor Cristian
-                Danescu-Niculescu-Mizil at Cornell University in 2018.</p>
-        </section>
     </section>
 
     <!-- Seven -->
     <section id="misc">
         <h2>Misc.</h2>
         <section>
+            <header>
+                <h4>Teaching Assistant</h4>
+            </header>
+            <ul>
+                <li><a href="https://cs229.stanford.edu/">CS 229: Machine Learning.</a></li>
+                <li><a href="https://web.stanford.edu/class/cs224n/">CS 224n: Natural Language Processing with Deep Learning.</a></li>
+                <li><a href="https://www.cs.cornell.edu/courses/cs4820/">CS 4820: Introduction to Analysis of Algorithms.</a></li>
+                <li><a href="https://www.cs.cornell.edu/courses/cs4740/">CS 4740: Natural Language Processing.</a></li>
+            </ul>
             <header>
                 <h4>Conference Reviewer</h4>
             </header>
