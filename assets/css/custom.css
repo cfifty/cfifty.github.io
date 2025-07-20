@@ -230,3 +230,390 @@ a {
     color: #6666ff;
 }
 
+/* Footnote styling */
+.footnote-ref {
+    color: #0066cc;
+    text-decoration: none;
+    font-size: 0.8em;
+    vertical-align: super;
+    font-weight: bold;
+    position: relative;
+    cursor: pointer;
+}
+
+.footnote-ref:hover {
+    text-decoration: underline;
+}
+
+/* Footnote tooltip */
+.footnote-ref::after {
+    content: attr(data-footnote-content);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 0.8em 1em;
+    border-radius: 6px;
+    font-size: 0.9em;
+    font-weight: normal;
+    line-height: 1.4;
+    white-space: normal;
+    max-width: 300px;
+    width: max-content;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    margin-bottom: 8px;
+}
+
+.footnote-ref::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #333;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    margin-bottom: 2px;
+}
+
+.footnote-ref:hover::after,
+.footnote-ref:hover::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+.footnotes {
+    border-top: 1px solid #ccc;
+    margin-top: 2em;
+    padding-top: 1em;
+    font-size: 0.9em;
+}
+
+.footnote {
+    margin-bottom: 0.5em;
+    padding-left: 1.5em;
+    text-indent: -1.5em;
+}
+
+.footnote-number {
+    color: #0066cc;
+    font-weight: bold;
+}
+
+.footnote-backref {
+    color: #0066cc;
+    text-decoration: none;
+    margin-left: 0.5em;
+}
+
+.footnote-backref:hover {
+    text-decoration: underline;
+}
+
+/* Blog content styling */
+.blog-content p {
+    margin-bottom: 1.5em;
+    line-height: 1.6;
+    color: #444;
+}
+
+.blog-content p:last-child {
+    margin-bottom: 0;
+}
+
+.blog-content {
+    color: #444;
+}
+
+.blog-content li {
+    color: #444;
+}
+
+.blog-content h1,
+.blog-content h2,
+.blog-content h3,
+.blog-content h4,
+.blog-content h5,
+.blog-content h6 {
+    color: #444;
+}
+
+.blog-content strong {
+    color: #222;
+    font-weight: bold;
+}
+
+/* Math display styling */
+.blog-content .MathJax {
+    margin: 1em 0;
+}
+
+/* Extra spacing for align environments */
+.blog-content .MathJax .mjx-math .mjx-mtable .mjx-mtr {
+    padding-top: 0.3em;
+    padding-bottom: 0.3em;
+}
+
+.blog-content .MathJax .mjx-math .mjx-mtable .mjx-mtr:first-child {
+    padding-top: 0;
+}
+
+.blog-content .MathJax .mjx-math .mjx-mtable .mjx-mtr:last-child {
+    padding-bottom: 0;
+}
+
+/* Remove extra spacing from manual breaks in blog content */
+.blog-content br + br {
+    display: none;
+}
+
+/* Center tag styling for blog content */
+.blog-content center {
+    text-align: center;
+    font-style: italic;
+    margin: 1em 0;
+    font-weight: 500;
+}
+
+/* Remove grey background/overlay from images in blog content */
+.blog-content .image img {
+    background-color: transparent !important;
+    background: none !important;
+}
+
+.blog-content .image {
+    background-color: transparent !important;
+    background: none !important;
+}
+
+.blog-content .image:before {
+    display: none !important;
+    opacity: 0 !important;
+    background: none !important;
+}
+
+.blog-content .image:after {
+    display: none !important;
+    opacity: 0 !important;
+}
+
+.blog-content img {
+    background-color: transparent !important;
+    background: none !important;
+}
+
+/* Enhanced footnote styling */
+.footnotes {
+    border-top: 2px solid #e1e1e1;
+    margin-top: 3em;
+    padding-top: 1.5em;
+    font-size: 0.9em;
+    background-color: #fafafa;
+    padding: 1.5em;
+    border-radius: 5px;
+}
+
+.footnotes h3 {
+    margin-top: 0;
+    margin-bottom: 1em;
+    color: #333;
+    font-size: 1.1em;
+}
+
+.footnote {
+    margin-bottom: 1em;
+    padding: 0.5em 0;
+    border-bottom: 1px solid #e8e8e8;
+}
+
+.footnote:last-child {
+    border-bottom: none;
+}
+
+.footnote-number {
+    color: #0066cc;
+    font-weight: bold;
+    margin-right: 0.5em;
+}
+
+.footnote-backref {
+    color: #0066cc;
+    text-decoration: none;
+    margin-left: 0.5em;
+    font-size: 0.9em;
+}
+
+.footnote-backref:hover {
+    text-decoration: underline;
+}
+
+/* Smooth scrolling for footnote links */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Citation styling */
+.cite-ref {
+    color: #0066cc;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.cite-ref:hover {
+    text-decoration: underline;
+}
+
+/* References section styling */
+.references {
+    margin-top: 3em;
+    padding-top: 1.5em;
+    border-top: 2px solid #e1e1e1;
+}
+
+.references h2 {
+    margin-bottom: 1.5em;
+    color: #333;
+}
+
+.reference-list {
+    list-style: none;
+    padding: 0;
+    counter-reset: reference-counter;
+}
+
+.reference-item {
+    margin-bottom: 2em;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    counter-increment: reference-counter;
+    position: relative;
+    font-family: 'Georgia', serif;
+    font-size: 0.9em;
+    line-height: 1.5;
+    padding-left: 2.5em;
+}
+
+.reference-item::before {
+    content: "[" counter(reference-counter) "]";
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: #666;
+    font-weight: bold;
+    font-family: sans-serif;
+    font-size: 0.9em;
+}
+
+.reference-item .bibtex-key {
+    display: none;
+}
+
+.reference-item .bibtex-field {
+    display: inline;
+    margin: 0;
+}
+
+.reference-item .bibtex-field-name {
+    display: none;
+}
+
+.reference-item .bibtex-field-value {
+    color: #333;
+}
+
+.reference-item .title {
+    font-weight: bold;
+    font-style: italic;
+}
+
+.reference-item .author {
+    color: #555;
+}
+
+.reference-item .journal {
+    font-style: italic;
+    color: #666;
+}
+
+.reference-item .year {
+    color: #777;
+}
+
+/* Example sections styling */
+.example-section {
+    margin: 2.5em 0;
+    padding: 0;
+    background-color: transparent;
+    border: none;
+}
+
+.example-section h4 {
+    margin-top: 0;
+    margin-bottom: 1.5em;
+    color: #444;
+    font-size: 1.2em;
+    font-weight: 600;
+    border-bottom: 2px solid #0066cc;
+    padding-bottom: 0.5em;
+}
+
+.code-block {
+    background-color: #fdfdfd;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 1.5em;
+    margin: 1.5em 0;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 1em;
+    font-style: italic;
+    line-height: 1.6;
+    white-space: pre-line;
+    overflow-x: auto;
+    color: #2d2d2d;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.code-block:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+}
+
+/* Weak text styling in code blocks */
+.code-block weak {
+    color: #aaa;
+    font-weight: normal;
+}
+
+/* Blog quote styling */
+.blog-quote {
+    font-size: 1.1em;
+    font-style: italic;
+    color: #666;
+    text-align: center;
+    margin: 2.5em 0;
+    padding: 1.5em 0;
+    width: 100%;
+    border: none;
+    background: none;
+    position: relative;
+    line-height: 1.6;
+    font-weight: normal;
+    border-top: 1px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.blog-quote em {
+    font-style: italic;
+    font-family: 'Times New Roman', Times, serif;
+}

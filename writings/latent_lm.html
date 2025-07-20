@@ -1,0 +1,888 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>Latent Space Language Modeling</title>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no"/>
+    <link rel="stylesheet" href="../assets/css/main.css"/>
+    <link rel="stylesheet" href="../assets/css/custom.css"/>
+    <script>
+        window.MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          }
+        };
+    </script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body class="is-preload">
+
+<!-- Header -->
+<header id="header">
+    <div class="inner">
+        <a href="../index.html" class="image avatar"><img src="../images/main.jpg" alt=""/></a>
+        <p><i>If you can't reach the stars</i>, <br/>
+            <i>then raise the earth</i>.</p>
+        <div class="line-break"></div>
+        <nav id="sidebar">
+            <ul>
+                <li><a href="../index.html#timeline-section">About</a></li>
+                <li><a href="../index.html#news">News</a></li>
+                <li><a href="../index.html#publications">Publications</a></li>
+                <li><a href="../index.html#research-highlights">Writings</a></li>
+                <li><a href="../index.html#projects">Projects</a></li>
+                <li><a href="../index.html#misc">Misc.</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<!-- Main -->
+<div id="main">
+    <section class="blog-content">
+        <header class="major">
+            <h1>Language, Entropy, and Language Modeling</h1>
+        </header>
+
+        <blockquote class="blog-quote">
+            <em>Is English—developed over millennia to suit the communication preferences of humans—really the ideal
+                language that machines would use to think, reason, and learn? Almost certainly not.</em>
+        </blockquote>
+
+        <h2>Foreword</h2>
+        <p>
+            I was inspired to write this after reading the excellent work
+            <a href="https://arxiv.org/abs/2507.07955">Dynamic Chunking for End-to-End Hierarchical Sequence Modeling</a>,
+            developed by <a href="https://sukjunhwang.github.io/">Sukjun Hwang</a>,
+            <a href="https://br-wa.github.io/" >Brandon Wang</a>, and <a href="https://x.com/_albertgu">Albert Gu</a>.
+            Their work proposes a clever method for training on raw input characters\footnote{I use "characters" and "bytes" interchangeably, but prefer the term "characters" because it is more strongly associated with NLP in my priors.}
+            by compressing a sequence of input characters (discrete space) into a sequence of latent representations (continuous space).
+            This sequence of latent representations is then passed through a language model, and then upsampled back to the character space
+            by a Decoder network. Albert's <a href="https://goombalab.github.io/blog/2025/hnet-past/">blog post</a> expands upon some of their
+            motivations, challenges, and failed approaches—and especially given this last point—I was encouraged to share some of my own
+            experiments and learnings around tokenization.
+        </p>
+        
+        <p>
+            I've been working on a flavor of tokenization—to be precise, trying to train Language Models on a latent language
+            designed for autoregressive modeling—off and on since January, but between graduating, starting a company, watching said company
+            disintegrate, working to help a friend start their company, applying to jobs, getting kicked out of Stanford graduate housing,
+            and finally couch surfing around South Bay for this past month, I've been remiss in driving this project to completion.
+        </p>
+        
+        <p>
+            I hope that someone might be able to build upon, flesh out, or even take umbrage with the ideas presented in this post and
+            draw them out to a satisfactory conclusion.
+        </p>
+        <h2>Language Modeling</h2>
+        <p>
+
+            One of the first things you teach students in an introductory NLP course is the derivation of language
+            modeling objective from maximum (log)likelihood estimation:
+
+            \begin{align*}
+                \max \mathbb{E}_{x \sim D} \left[\log p_\theta(x_1, ..., x_n)\right] &= -\min \mathbb{E}_{x \sim D} \left[\log p_\theta(x_1, ..., x_n)\right]\\
+                &= -\min \sum\limits_{x\sim D} p(x_1, ..., x_t)\log p_\theta(x_1, ..., x_n) \\
+                &\approx -\min \sum\limits_{x\sim D} \frac{1}{|D|} \log p_\theta(x_1, ..., x_n) \\
+                &= -\min \frac{1}{|D|} \sum\limits_{x\sim D} \sum\limits_{i=1}^t \log p_\theta(x_t|x_1, ..., x_{t-1})\\
+            \end{align*}
+<!--            \begin{align*}-->
+<!--            \max \mathbb{E}_{x \sim D} \left[\log p_\theta(x_1, ..., x_n)\right] &= \max \mathbb{E}_{x \sim D} \left[\sum \log p_\theta(x_t|x_1, ..., x_{t-1})\right]\\-->
+<!--            &= \max \mathbb{E}_{x \sim D} \left[\log p_\theta(x_t|x_1, ..., x_{t-1})\right]\\-->
+<!--            &= \max p(x_t|x_1, ..., x_{t-1}) \log p_\theta(x_t|x_1, ..., x_{t-1})\\-->
+<!--            \end{align*}-->
+
+            And then maybe a little later on, you take a course in information theory (or read
+            <a href="https://en.wikipedia.org/wiki/Cryptonomicon">Cryptonomicon</a>\footnote{Neal Stephenson's novel offers a great introduction to information theory in the context of a historical fiction narrative.}) and realize
+            that this really just the cross entropy between two distributions: $p$ is the "true" conditional distribution from written English
+            and $p_\theta$ is the distribution your language model learns over the course of training. With this understanding,
+            you can rewrite the language modeling objective as the sum of the <a href="https://en.wikipedia.org/wiki/Entropy_(information_theory)">entropy</a>
+            of the underlying language and the KL-divergence between the predicted language distribution and the actual language distribution:
+
+            \begin{align*}
+                \mathcal{L} &= -\frac{1}{|D|} \sum\limits_{x\sim D} \sum\limits_{i=1}^t \log p_\theta(x_t|x_1, ..., x_{t-1})\\
+                &= \sum\limits_{x\sim D} p(x) -\log p_\theta(x) \\
+                &= \sum\limits_{x\sim D} p(x) \left[\log p(x) - \log p(x) - \log p_\theta(x)\right] \\
+                &= \sum\limits_{x\sim D} -p(x) \log p(x) + p(x) \left[\log p(x) - \log p_\theta(x)\right] \\
+                &= \underbrace{\sum\limits_{x\sim D} -p(x) \log p(x)}_{H(X)} +  \underbrace{\sum\limits_{x\sim D} p(x) \log \frac{p(x)}{p_{\theta}(x)}}_{KL(p||p_{\theta})}
+            \end{align*}
+
+            where $H(X)$ is the entropy of the English language and $KL(p||p_{\theta})$ is the KL-divergence between
+            the true distribution $p$ and your learned distribution $p_{\theta}$. Informally, the KL-divergence is a measure
+            of how "off" $p_{\theta}$ is from $p$\footnote{The KL divergence between $p$ and $p_{\theta}$ can be interpreted as the number of extra bits needed to compress $p_{\theta}$ when you use a code optimized for $p$.}. When our language model
+            perfectly models the distribution of the English language, this term drops to 0, and we're left with H(X), the entropy of
+            the English language.
+        </p>
+        
+        <p>
+            Ok; so we're training our language model to minimize $\min H(X) + KL(p||p_{\theta})$, but $H(X)$ is not a function of
+            $\theta$, so we're really just minimizing $KL(p||p_{\theta})$. As a result, the lower bound on the cross entropy loss will
+            be $H(X)$, and even the theoretically "perfect" language model will be unable to break past this threshold.
+            Or can it?
+        </p>
+
+        <h2>Learning a Latent Language</h2>
+
+        <p>
+            The only way to decrease $H(X)$ is to reduce the entropy of the written English language. This seems really hard, but maybe we can
+            cheat a bit. But first, let's look at sources of entropy in language. Concretely, what are these and do we even want to try to
+            eliminate them?
+        </p>
+        
+        <p>
+            One of the examples that I love to use here is French. In French, we often modify nouns based on the gender,
+            specifically, we add an "e" to nouns if the speaker is female. For example:
+            The english phrase
+            <center>I am tall</center>
+            translates to
+            <center>Je suis grand(e)</center>
+         where the speaker adds an "e" to the end of "grand" if they are female.
+        </p>
+        
+        <p>
+            Putting yourself in the proverbial shoes of a LLM trained to on French literature, generating this last token is really hard:
+            it's a coin flip without knowing the gender of the speaker. However, by moving to English— we eliminate this source of uncertainty because our
+            nouns do not change based on the gender of the speaker.
+        </p>
+        
+        <p>
+            Going back to the first question, how might we cheat? Well, we fundamentally need a different language,
+            one with a lower entropy than English, and ideally, other characteristics—such as sequence length and the
+            distribution of entropy across tokens—that is more amenable to next-token prediction than English is. Maybe we can
+            learn it in an end-to-end fashion, similar to how recent works try to learn how sequences of adjacent characters
+            should be merged together into tokens \cite{hwang2025dynamic, blt, nawrot2022efficient, nawrot2021hierarchical}.
+
+        <h3>Latent Language Implementation</h3>
+        <p>
+            As a first approximation, we want to learn a latent language with two properties:
+        </p>
+        
+        <ol>
+            <li>It is easy for an LM to model.</li>
+            <li>It can be converted to and from English with relative ease.</li>
+        </ol>
+
+        <p>
+            Borrowing from what already works in Computer Vision as a v1 attempt \cite{taming, ldm} for latent space
+            image generation, let's try jointly training a compression model alongside a language model. The compression
+            model is composed of two components: an Encoder ($\mathcal{E}$) and a Decoder ($\mathcal{D}$). The Encoder
+            takes in a sequence of characters and outputs a (compressed) sequence of discrete latent tokens, using
+            Vector Quantization to map the Encoder's output to the nearest token in our latent language. The Decoder
+            is then tasked with reconstructing the original English sentence from the (compressed) sequence of latent language
+            tokens.
+        </p>
+
+        <p>
+            This Encoder-Decoder paradigm is enough to learn a latent language, but there's no <em>a priori</em> reason that
+            latent language would be easy for a LM to model or have desirable properties that make it better than English.
+            To try and satisfy this first characteristic, we jointly train a Language Model alongside the compression model,
+            making the next-token prediction loss backpropagate through the language model and back through the Encoder. The
+            balance of the compression model minimizing reconstruction error, combined with the Language Model minimizing
+            next-token prediction error, would hopefully avoid non-degenerative solutions\footnote{Such as the language model collapsing the latent vocabulary to a single, easy-to-predict token.}
+            and learn a latent language that is more easy to model than English.
+        </p>
+
+        <p>
+            Such an architecture might look like the one below:
+        </p>
+
+            <span class="image fit"><img src="../images/latent_lm/stage_1.png"/></span>
+
+        <p>
+            Where the Encoder and Decoder are instantiated as non-causal sequence models, specifically a BERT\cite{bert}
+            model. I chose a non-causal model because it enables better compression than a causal model: information
+            from later in the sequence can become blended into tokens that appear earlier into the sequence, expanding
+            the space of latent languages that could be learned. Specifically, it might be desirable to develop a language
+            where the characters that appear early in the sequence are strongly (and in turn influence) characters that
+            appear at the end of the sequence\footnote{The OG <a href="https://arxiv.org/pdf/1706.03762">Attention Is All You Need</a>
+            transformer architecture follows a similar pattern for machine translation, using a non-causal Encoder.}.
+        </p>
+
+        <p>
+            For the actual compression and decompression methods, I played around with several different techniques
+            for static compression (i.e. we go from an input character sequence length of $t$ to a latent token
+            sequence of length $t / c$ where $c$ is the compression factor):
+        </p>
+        
+        <ol>
+            <li>A simple 1d convolution across the sequence dimension with kernel size $k$ and stride $c$.</li>
+            <li>A state-space model\cite{mamba}, emitting a token every $c$ steps.</li>
+            <li>Top-k attention pooling (where $k= t/c$).</li>
+            <li>A linear layer to project each $d$-dimensional token down to $d/c$ and then reshaping the sequence length to merge every $c$ tokens together.</li>
+            <li>A linear transformation on the sequence dimension itself: if the input is (b, t, d), then we can learn a per-feature dimension linear map to project to (b, t/c, d).</li>
+        </ol>
+        
+        <p>
+            Out of these, (1) and (2) performed the best, with similar training metrics. Decompression of the conv1d is
+            simply a transposed 1d convolution, and for the SSM, we duplicate each token in the compressed sequence
+            $c$ times, add learnable positional embeddings $(1, 2, ..., c)$, and pass this input through a Decoder-side
+            SSM to feed into the BERT-style Decoder model.
+        </p>
+        
+        <p>
+            For the language model, I went with a GPT-2 small architecture\cite{gpt2}. I would have really liked to
+            scale up the parameters on both the compression model and language model, but I'm limited by access
+            to compute.
+        </p>
+        
+        <p>
+            The joint training objective is a linear combination of the compression model and language model objectives:
+            $$\mathcal{L}(x) = \underbrace{-\sum\limits_{i=1}^t \log p_\theta(x_i|z)}_{\text{compression model loss}}
+            \underbrace{-\beta \sum\limits_{k=1}^{t/c} \log q_\phi(z_k|z_{ < k})}_{\text{language model loss}}$$
+            where $x = (x_1, x_2, ..., x_t)$ is the input sequence of characters, $z = (z_1, ..., z_{t/c})$ is sequence
+            of latent tokens, $\beta$ is a loss-weighing factor for the multi-task objective,
+            $p_\theta$ is the Decoder's distribution over English characters, and $q_\phi$ is the language model's distribution over
+            the latent alphabet.
+        </p>
+
+        <h2>Remarks on Lossy Compression and No Free Lunch</h2>
+        <p>
+            You'll notice this approach employs lossy compression; the Decoder network does not perfectly reconstruct the
+            English characters input to the decoder. This differs from tokenization methods which bijectively map sequences of english characters into
+            tokens. However, bijective functions cannot reduce entropy: $H(X) = H(f(X))$ where $f$ is a bijective function.
+            If we want to develop a latent language that has lower entropy than English, some sort of lossy compression is needed.
+
+            <span class="image almost_fit"><img src="../images/latent_lm/tokenization_comparison.png"/></span>
+        </p>
+        <p>
+            You will also notice that we are still computing the cross-entropy loss with respect to English characters:
+            $P(x_i|z)$ for the sequence of latent tokens $z = (z_1, ..., z_{t/c})$, so in a sense, we're continuing to pay
+            the entropy penalty for the English language. We're just changing where that price is paid, moving part of the cost
+            from the language model to the compression model.
+        </p>
+        <p>
+            Let's return to our hypothetical example of translating between French and English. The French phrase:
+
+            <center>Je suis grande</center>
+
+            might get mapped to a latent alphabet, let's call this latent alphabet English:
+
+            <center>I am tall</center>
+
+            and then back to:
+
+            <center>Je suis grand</center>
+
+            Where the reconstructed phrase drops the "e" at the end of "grand". In this setting—moving from a higher
+            entropy human language to a lower entropy one—the lower bound on the language modeling loss will be lower,
+            <strong>but the price of the higher entropy is still paid, via the reconstruction loss at the compression model.</strong>
+            Revisiting the loss function, and assuming the multi-task loss weighing term $\beta = 1$ for simplicity,
+            with random variable X over English sentences and random variable Z over latent language sentences (i.e.
+            Z = Encoder(X)), our training objective becomes:
+
+            \begin{align*}
+                \mathcal{L} &= \underbrace{\mathbb{E}_{x \sim D} \left[-\sum\limits_{i=1}^t \log p(x_i|z)\right]}_{\text{Compression Model Objective}} + \underbrace{\mathbb{E}_{z \sim Z}\left[-\sum\limits_{k=1}^{t/c} \log q(z_k|z_{ < k})\right]}_{\text{Language Model Objective}}\\
+                &= \mathbb{E}_{x \sim D}\left[-\sum\limits_{i=1}^t \log p(x_i|z)\right] + H(Z) + KL(q||q_{\phi})\\
+                &= \mathbb{E}_{(x,\mathcal{E}(x)) \sim D}\left[ -\sum\limits_{i=1}^t \log p(x_i|z)\right] + H(Z) + KL(q||q_{\phi})\\
+                &= \underbrace{\mathbb{E}_{(x,z) \sim D}\left[-\log \prod_{i=1}^t p(x_i|z)\right]}_{\text{Conditionally independent factorization}} + H(Z) + KL(q||q_{\phi})\\
+                &= \mathbb{E}_{(x,z) \sim D}\left[-\log p(x|z)\right] + H(Z) + KL(q||q_{\phi})\\
+                &= H(X|Z) + H(Z) + KL(q||q_{\phi})\\
+                &= H(X,Z) + KL(q||q_{\phi})\\
+                &= H(X,\mathcal{E}(X)) + KL(q||q_{\phi})\\
+                &= H(X) + KL(q||q_{\phi})\\
+            \end{align*}
+
+            Which gives us almost exactly the same formula as our Language Modeling objective, albeit through a different
+            route\footnote{The different route alluded to refers to the non-causal modeling assumption of the compression model: $p(x|z) = \prod p(x_i|z)$.}. There truly is "no free lunch", but at least we
+            might be able to choose where we pay for lunch (at the compression model or at the language model).
+        </p>
+
+        <h2>Results</h2>
+        <p>
+            For the following results, I use a BPE checkpoint trained for 100 epochs while the latent language model
+            was only trained for 75 epochs (when I lost access to compute). I just used the OpenWebText dataset\cite{owt}, writing
+            and epoch every ~3,000 steps. Both bpe and latent language models used the exact same training settings:
+            learning rate of 5e-5, dropout of 0.05, sequence length of 512 characters, etc.
+        </p>
+
+        <p>
+            In the below plot, we compare a standard BPE model trained on OpenWebText to a latent language model
+            trained on the same dataset. Using the notation from earlier, this compares $H(X) + KL(p||p_\theta)$ for the
+            BPE model with $H(Z) + KL(q||q_\phi)$ for the latent language model where the latent language model uses a
+            compression factor of $c=2$ while the BPE model uses a compression factor of $c=4.1$. We compute loss-per-character,
+            normalizing default the BPE cross-entropy loss by 4 and the latent language cross-entropy loss by 2.
+        </p>
+
+        <span class="image fit"><img src="../images/latent_lm/blog_loss_comparison.png"/></span>
+
+        <p>
+            It's also interesting to look at the distortion from the compression model, i.e., $H(X|Z)$. This term is
+            very small, on the order of 1e-4, indicating the compression model is able to reconstruct the input sentences
+            through the information bottleneck with relative ease.
+        </p>
+
+        <p>
+            Perhaps more interesting than the distortion from the reconstructions, we can look at the distortion from
+            the output of the language model during training with
+            <a href="https://machinelearningmastery.com/teacher-forcing-for-recurrent-neural-networks/">teacher forcing</a>.
+            How well does the Decoder reconstruct the input (shifted by one token) after taking the most likely latent token output
+            from the language model?
+        </p>
+        <p>
+            Formally, this term is $P(x|\hat{z})$ where $\hat{z}$ is the sequence of latent tokens output from the language model with
+            highest probability mass. It can be viewed as the distribution over English characters when the "surprise"
+            from selecting the next token is factored out (by the language model). In this experiment, it is $\sim 0.07$.
+            Unsurprisingly, this is substantially lower than the entropy of the English language\footnote{Often estimated
+            to be around 0.6-1.3}, and while the end-to-end method does not work, it's still quite cool to see an output
+            distribution over English characters have such low cross-entropy loss.
+        </p>
+
+        <h2>Entropy Estimation Analysis</h2>
+        <p>
+            Using our OpenWebText dataset as a proxy for "all written english", we can approximate the inherent entropy
+            of English and compare this value to the inherent entropy of our latent language. We approximate both values
+            by computing 4-gram probabilities on the validation dataset using statistics computed on the training set.
+            For example, the phrase:
+            <center>I am tall.</center>
+            might become tokenized to
+            <center>'I', ' am', ' tall', '.'</center>
+            where the probability of this example is:
+            <center>p = p('I') * p(' am' | 'I') * p(' tall'|'I', ' am') * p('.'| 'I', ' am', ' tall')</center>
+            and the entropy of this example is:
+            $$H(X) = -p \log p$$
+            and we can then divide by the number of characters in the phrase (10 in this example) to compute a normalized measure of Entropy
+            in bits per character. Note that tokenization does not (theoretically) change the entropy of the underlying language,
+            but it would likely affect our n-gram approximation as it changes the granularity of the n-grams. For the
+            approximation in this section, we use BPE.
+        </p>
+        <p>
+            We estimate the entropy of English as $\sim 1.8$ bits per
+            character\footnote{Read: bits per byte because we use 8-bit ASCII encodings.} and the entropy of our latent
+            language as $\sim 3.0$ bits per (english) character. This result shows that we <strong>did not</strong>
+            learn a latent language with lower inherent entropy than English. Specifically, backpropagating the
+            gradients from the next-token language modeling loss back through the Encoder of the compression model
+            <strong>does not</strong> cause it to develop a latent language with lower inherent entropy than English. I
+            have a couple of ideas for why this didn't work, but haven't (yet) been able to investigate them.
+        </p>
+
+        <h3>Mapping Latent Tokens to English</h3>
+        <p>
+            It might also be useful to look at how individual (or groups) of latent tokens are mapped to English to better
+            understand the properties of the latent language that was learned. For this analysis, I chose:
+            <center><em>The quick brown fox jumps over the lazy dog</em></center>
+            because it contains every letter in the English alphabet. Our model uses 8-bit ASCII tokens as input, so the input
+            to the compression model becomes the following sequence of tokens:
+            <center>89, 109, 106,  37, 118, 122, 110, 104, 112,  37, 103, 119, 116, 124, 115,  37, 107, 116, 125,  37, 111, 122, 114, 117, 106, 105,  37, 116, 123, 106, 119,  37, 121, 109, 106,  37, 113, 102, 127, 126,  37, 105, 116, 108</center>
+            Passing this sequence through the Encoder model, we arrive at the compressed sequence of codewords that compose
+            our latent language:
+            <center>36629, 17899, 60809, 43672, 51707,  3434, 63324,  9911, 42644, 25019, 36033, 30057, 60667, 26184, 25722, 54845, 12234, 65037, 48188, 42491, 36764, 22858</center>
+            We use a compression factor of 2, so the latent token sequence length should be 0.5$\times$ the original sequence length.
+            Decoding this latent sequence back to english, we completely recover the 8-bit ASCII sequence:
+            <center>89, 109, 106,  37, 118, 122, 110, 104, 112,  37, 103, 119, 116, 124, 115,  37, 107, 116, 125,  37, 111, 122, 114, 117, 106, 105,  37, 116, 123, 106, 119,  37, 121, 109, 106,  37, 113, 102, 127, 126,  37, 105, 116, 108</center>
+            But what happens if we decode a single token at a time, or subsequences of tokens, rather than the full latent sequence?
+            Well, decoding a single token at a time in isolation results in gibberish:
+            <pre><code>e
+                rud
+                k
+                brvwn
+                f
+                x b
+                mpk vver
+
+                h
+
+                w:_y vog
+            </code></pre>
+            But then decoding sequences of latent tokens does quite a bit better:
+            <center>36629, 17899, 60809, 43672, 51707, 3434, 63324, 9911, 42644</center>
+            translates to:
+            <center>The quick brown b-</center>
+            with adding the next token in this sequence:
+            <center>36629, 17899, 60809, 43672, 51707, 3434, 63324, 9911, 42644, <span style="color: #B8860B;">25019</span></center>
+            allowing us to correctly decode the word "fox":
+            <center>The quick brown fox</center>
+
+            It seems like the latent language learned to blend information from across the English input characters; individual
+            tokens may be nonsensical in insolation, but when combined with adjacent latent tokens, they develop meaning
+            in the conversion back to English.
+        </p>
+
+        <h3>Example (non-cherry picked) Generations</h3>
+
+        <p>
+            The following prompts are the starting sentences of the first and second examples in the validation split of the
+            OpenWebText dataset. The next token is sampled with temperature = 0.9, top-p = 0.95, and top_k=50. I did not fine-tune these
+            hyperparameters, they were the default that I found for generating with GPT-2. The latent language model
+            uses a compression factor of $c=2$; although from playing around with other settings, setting $c=4$ also seemed to
+            work well. BPE tokenization on average reduces ever 4.1 adjacent characters to a single token, so we'll approximate
+            the sequential compression factor of BPE as $c=4$.
+        </p>
+
+        <p>
+            For the latent language model, we feed the prompt through the encoder, auto-regressively generate in the latent space, and
+            then pass the full sequence (prompt tokens + generated tokens) through the decoder to output an English sentence.
+            As the compression model is lossy, there will occasionally be spelling mistakes in the output, even for the prompt. I've
+            highlighted some of the spelling mistakes in the generations below.
+        </p>
+
+        <div class="example-section">
+            <h4>Example 1:</h4>
+            
+            <p><strong>Prompt:</strong></p>
+            <div class="code-block">
+                Just in case the words "Command & Conquer" and "free-to-play" hadn't got you wary enough for the upcoming C&C Generals 2, there'
+            </div>
+            
+            <p><strong>BPE Model (compression factor = ~4.1):</strong></p>
+            <div class="code-block">
+                <weak>Just in case the words "Command & Conquer" and "free-to-play" hadn't got you wary enough for the upcoming C&C Generals 2, there's</weak> now no sign of what you'll need to see.
+
+In a live demo from Ubisoft Montreal, the game's creators announced that the next C&C game would be "the largest expansion ever" in the world.
+
+The demo was revealed during the latest C&C game reveal, and it will be available from Ubisoft Montreal on October 18th.
+
+"It's a huge achievement," said Brad "Pascal" Lattimore
+            </div>
+            
+            <p><strong>Latent Language Model (compression factor = 2):</strong></p>
+            <div class="code-block">
+<weak>Just in case the words "Command & Conquer" and "free-to-play" ha<strong><span style="color: #B8860B;">s</span></strong>n't got you <strong><span style="color: #B8860B;">e</span></strong>ary enough for the upcoming C&C Generals 3, there's</weak> a new character with some of the first big parts in the series: Ary Generals 3, which argues that a command of the "responsible" guards reacted with high speed over that final place in line with this redesign to the series, is coming and is set to run on the VFX Store until 30 April 2015.
+
+There are 16 complete characters of "free-to-play" game day, so it's not important to note,
+            </div>
+        </div>
+        
+        <div class="example-section">
+            <h4>Example 2:</h4>
+            
+            <p><strong>Prompt:</strong></p>
+            <div class="code-block">
+''It just goes to show that this is not just something that happens elsewhere, it could happen in countries like Australia
+            </div>
+            
+            <p><strong>BPE Model (compression factor = ~4.1):</strong></p>
+            <div class="code-block">
+<weak>''It just goes to show that this is not just something that happens elsewhere, it could happen in countries like Australia</weak>,'' said Greg Abbott.
+
+''The state is going to make more decisions, and to provide for Australians, it would be a shock to see Australia's economy get in a better position."
+
+Australian Prime Minister Tony Abbott has been critical of Australia's performance in the G20 summit, urging leaders to try to stop the "federalization" of Australia's financial sector.
+
+''It's not just a surprise," ico
+            </div>
+            
+            <p><strong>Latent Language Model (compression factor = 2):</strong></p>
+            <div class="code-block">
+<weak>''It just goes to show that this is not just something that happens elsewhere, it could happen in countries like Australia</weak>," said Jgiia Hermeson, an ex-separatist pedophile, in the city of Budapest, in 2012, in which experts spoke to the editorial editor of the author of the ancient Greeks.
+
+Her claim that leading to the preferences began on this site of this week's paper on Tuesday, the first reference that began last week on The Telegraph.
+
+"It was at the end of America. It was at the end of its season in
+            </div>
+        </div>
+
+        <h2>Thoughts on the Future</h2>
+        <p>
+            A valid question is does this even matter: is there any benefit in reducing the inherent entropy of the underlying
+            data for language modeling? My honest answer is that I really don't know. Looking at a more concrete case,
+            would there any benefit to language modeling in a higher-entropy language like French by first translating
+            the input French prompt to English, generating the response, and then re-translating this entire sentence
+            back to French? You will likely get a different output French sentence—with even the prompt changing on
+            occasion due to the resulting generation—but maybe this is "good enough"? If not, would a latent language
+            be useful in other contexts where decoding back to English is less important? Perhaps in text-conditioned
+            generation to reduce the sequence length of the prompt (i.e. text to image and text to video generation)?
+        </p>
+
+        <p>
+            Another point I'd like to address is how a latent language model would be different than tokenization methods,
+            even the most recent dynamic tokenization approaches like H-Nets\cite{hwang2025dynamic}, Dynamic Token
+            Pooling\cite{nawrot2022efficient}, Byte-Latent Transformers\cite{blt},
+            and Hourglass Networks\cite{nawrot2021hierarchical}? First of all, the cited methods actually work whereas
+            my latent language idea does not :) But a close second is generation in the latent space. For dynamic tokenization methods,
+            the input to inner language model is not actually the language model's output, but rather the language model's output
+            first transformed by the Decoder and then again by the Encoder. The Decoder is needed to figure out the next English token to be generated,
+            and then the Encoder is needed to map this sequence into a representation suitable for the LM to generate the next token.
+            This characteristic contrasts with the notion of a
+            "latent language" where one would be able to autoregressively generate sequences entirely within the latent space.
+        </p>
+
+        <p>
+            Extrapolating a bit, it's possible a future generation of language models employ some combination of dynamic
+            chunking within a latent language optimized for machines, not humans. Perhaps this will arise as autonomous agents
+            develop efficient communication protocols to convey information without humans in the loop, but I'll leave
+            these ponderings to the science fiction writers of today rather than blog post of an unemployed and
+            homeless PhD graduate.
+        </p>
+
+        <div class="citation-section">
+            <h2>Citation</h2>
+            <p><strong>Cite as:</strong></p>
+            <pre><code>@article{fifty2025latent,
+  title   = "Latent Space Language Modeling",
+  author  = "Fifty, Christopher",
+  journal = "cfifty.github.io",
+  year    = "2025",
+  month   = "Jul",
+  url     = "https://cfifty.github.io/writings/latent_lm.html"
+}</code></pre>
+        </div>
+
+        <div class="references">
+            <h2>References</h2>
+            <ul class="reference-list">
+                <li>@article{hwang2025dynamic,
+  title={Dynamic Chunking for End-to-End Hierarchical Sequence Modeling},
+  author={Hwang, Sukjun and Wang, Brandon and Gu, Albert},
+  journal={arXiv preprint arXiv:2507.07955},
+  year={2025}
+}</li>
+                <li>@article{nawrot2022efficient,
+  title={Efficient transformers with dynamic token pooling},
+  author={Nawrot, Piotr and Chorowski, Jan and Lancucki, Adrian and Ponti, Edoardo M},
+  journal={arXiv preprint arXiv:2211.09761},
+  year={2022}
+}</li>
+                <li>@article{nawrot2021hierarchical,
+  title={Hierarchical transformers are more efficient language models},
+  author={Nawrot, Piotr and Tworkowski, Szymon and Tyrolski, Michal and Kaiser, Lukasz and Wu, Yuhuai and Szegedy, Christian and Michalewski, Henryk},
+  journal={arXiv preprint arXiv:2110.13711},
+  year={2021}
+}</li>
+                <li>@inproceedings{taming,
+  title={Taming transformers for high-resolution image synthesis},
+  author={Esser, Patrick and Rombach, Robin and Ommer, Bjorn},
+  booktitle={Proceedings of the IEEE/CVF conference on computer vision and pattern recognition},
+  pages={12873--12883},
+  year={2021}
+}</li>
+                <li>@inproceedings{ldm,
+  title={High-resolution image synthesis with latent diffusion models},
+  author={Rombach, Robin and Blattmann, Andreas and Lorenz, Dominik and Esser, Patrick and Ommer, Bj{\"o}rn},
+  booktitle={Proceedings of the IEEE/CVF conference on computer vision and pattern recognition},
+  pages={10684--10695},
+  year={2022}
+}</li>
+                <li>@inproceedings{bert,
+  title={Bert: Pre-training of deep bidirectional transformers for language understanding},
+  author={Devlin, Jacob and Chang, Ming-Wei and Lee, Kenton and Toutanova, Kristina},
+  booktitle={Proceedings of the 2019 conference of the North American chapter of the association for computational linguistics: human language technologies, volume 1 (long and short papers)},
+  pages={4171--4186},
+  year={2019}
+}</li>
+                <li>@article{mamba,
+  title={Mamba: Linear-time sequence modeling with selective state spaces},
+  author={Gu, Albert and Dao, Tri},
+  journal={arXiv preprint arXiv:2312.00752},
+  year={2023}
+}</li>
+                <li>@article{gpt2,
+  title={Language models are unsupervised multitask learners},
+  author={Radford, Alec and Wu, Jeffrey and Child, Rewon and Luan, David and Amodei, Dario and Sutskever, Ilya and others},
+  journal={OpenAI blog},
+  volume={1},
+  number={8},
+  pages={9},
+  year={2019}
+}</li>
+                <li>@misc{owt,
+	title={OpenWebText Corpus},
+	author={Aaron Gokaslan and Vanya Cohen},
+	howpublished={\url{http://Skylion007.github.io/OpenWebTextCorpus}},
+	year={2019}
+}</li>
+                <li>@article{blt,
+  title={Byte latent transformer: Patches scale better than tokens},
+  author={Pagnoni, Artidoro and Pasunuru, Ram and Rodriguez, Pedro and Nguyen, John and Muller, Benjamin and Li, Margaret and Zhou, Chunting and Yu, Lili and Weston, Jason and Zettlemoyer, Luke and others},
+  journal={arXiv preprint arXiv:2412.09871},
+  year={2024}
+}</li>
+            </ul>
+        </div>
+    </section>
+</div>
+
+<!-- Footer -->
+<footer id="footer">
+    <div class="inner">
+        <ul class="icons">
+            <li><a href="https://twitter.com" class="icon brands fa-twitter" target="_blank"><span
+                    class="label">Twitter</span></a></li>
+            <li><a href="https://github.com/cfifty" class="icon brands fa-github" target="_blank"><span class="label">Github</span></a>
+            </li>
+            <li><a href="mailto:cjf92@cornell.edu" class="icon solid fa-envelope"><span class="label">Email</span></a>
+            </li>
+        </ul>
+        <ul class="copyright">
+            <li>&copy; Chris Fifty</li>
+            <li>Design: <a href="http://html5up.net">HTML5 UP</a></li>
+        </ul>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="../assets/js/jquery.min.js"></script>
+<script src="../assets/js/jquery.poptrox.min.js"></script>
+<script src="../assets/js/browser.min.js"></script>
+<script src="../assets/js/breakpoints.min.js"></script>
+<script src="../assets/js/jquery.scrollex.min.js"></script>
+<script src="../assets/js/jquery.scrolly.min.js"></script>
+<script src="../assets/js/util.js"></script>
+<script src="../assets/js/main.js"></script>
+
+<!-- Blog utilities -->
+<script>
+// Footnote utility functions
+function addFootnote(text, id) {
+    // Create footnote reference in text
+    const ref = `<a href="#fn${id}" class="footnote-ref" id="fnref${id}">${id}</a>`;
+    
+    // Create footnote entry
+    const footnote = `
+        <div class="footnote" id="fn${id}">
+            <span class="footnote-number">${id}.</span> ${text} <a href="#fnref${id}" class="footnote-backref">↩</a>
+        </div>
+    `;
+    
+    return { ref, footnote };
+}
+
+// Auto-number footnotes if needed
+function autoNumberFootnotes() {
+    const footnotes = document.querySelectorAll('.footnote');
+    const footnoteRefs = document.querySelectorAll('.footnote-ref');
+    
+    // Sort footnotes by order of appearance in text
+    const refOrder = Array.from(footnoteRefs).map(ref => ref.getAttribute('href').replace('#fn', ''));
+    const footnoteContainer = document.querySelector('.footnotes');
+    
+    // Reorder footnotes based on text appearance
+    if (footnoteContainer && refOrder.length > 0) {
+        const sortedFootnotes = [];
+        refOrder.forEach((id, index) => {
+            const footnote = document.querySelector(`#fn${id}`);
+            if (footnote) {
+                // Update numbering
+                const numberSpan = footnote.querySelector('.footnote-number');
+                if (numberSpan) {
+                    numberSpan.textContent = `${index + 1}.`;
+                }
+                
+                // Update reference number
+                const ref = document.querySelector(`#fnref${id}`);
+                if (ref) {
+                    ref.textContent = index + 1;
+                }
+                
+                sortedFootnotes.push(footnote);
+            }
+        });
+        
+        // Re-append in correct order
+        sortedFootnotes.forEach(footnote => {
+            footnoteContainer.appendChild(footnote);
+        });
+    }
+}
+
+// Citation management system
+function processCitations() {
+    const content = document.querySelector('.blog-content');
+    if (!content) return;
+    
+    // Find all \cite{} patterns
+    const citePattern = /\\cite\{([^}]+)\}/g;
+    let html = content.innerHTML;
+    const citationMap = new Map();
+    let citationCounter = 0;
+    
+    // Replace \cite{} with numbered links
+    html = html.replace(citePattern, (match, keys) => {
+        const keyList = keys.split(',').map(k => k.trim());
+        const links = keyList.map(key => {
+            if (!citationMap.has(key)) {
+                citationCounter++;
+                citationMap.set(key, citationCounter);
+            }
+            const num = citationMap.get(key);
+            return `<a href="#ref-${key}" class="cite-ref">[${num}]</a>`;
+        });
+        return links.join(', ');
+    });
+    
+    content.innerHTML = html;
+    return citationMap;
+}
+
+// Footnote management system
+function processFootnotes() {
+    const content = document.querySelector('.blog-content');
+    if (!content) return;
+    
+    // Find all \footnote{} patterns
+    const footnotePattern = /\\footnote\{([^}]+)\}/g;
+    let html = content.innerHTML;
+    const footnotes = [];
+    let footnoteCounter = 0;
+    
+    // Replace \footnote{} with numbered links and collect footnote content
+    html = html.replace(footnotePattern, (match, footnoteText) => {
+        footnoteCounter++;
+        const footnoteId = `fn${footnoteCounter}`;
+        const footnoteRefId = `fnref${footnoteCounter}`;
+        
+        // Store footnote content
+        footnotes.push({
+            id: footnoteId,
+            refId: footnoteRefId,
+            number: footnoteCounter,
+            content: footnoteText
+        });
+        
+        // Return the footnote reference link
+        return `<a href="#${footnoteId}" class="footnote-ref" id="${footnoteRefId}">${footnoteCounter}</a>`;
+    });
+    
+    // Update content with processed footnotes
+    content.innerHTML = html;
+    
+    // Generate footnotes section if there are footnotes
+    if (footnotes.length > 0) {
+        generateFootnotesSection(footnotes);
+    }
+    
+    return footnotes;
+}
+
+// Generate footnotes section
+function generateFootnotesSection(footnotes) {
+    // Find existing footnotes section or create one
+    let footnotesSection = document.querySelector('.footnotes');
+    if (!footnotesSection) {
+        footnotesSection = document.createElement('div');
+        footnotesSection.className = 'footnotes';
+        footnotesSection.innerHTML = '<h3>Footnotes</h3>';
+        
+        // Insert before references section
+        const referencesSection = document.querySelector('.references');
+        if (referencesSection) {
+            referencesSection.parentNode.insertBefore(footnotesSection, referencesSection);
+        } else {
+            // Insert at end of blog content
+            const blogContent = document.querySelector('.blog-content');
+            blogContent.appendChild(footnotesSection);
+        }
+    } else {
+        // Clear existing footnotes but keep the header
+        footnotesSection.innerHTML = '<h3>Footnotes</h3>';
+    }
+    
+    // Add footnotes
+    footnotes.forEach(footnote => {
+        const footnoteDiv = document.createElement('div');
+        footnoteDiv.className = 'footnote';
+        footnoteDiv.id = footnote.id;
+        footnoteDiv.innerHTML = `
+            <span class="footnote-number">${footnote.number}.</span> ${footnote.content} 
+            <a href="#${footnote.refId}" class="footnote-backref">↩</a>
+        `;
+        footnotesSection.appendChild(footnoteDiv);
+    });
+}
+
+// Parse bibtex entries and format them
+function formatBibtexReferences() {
+    const referencesList = document.querySelector('.reference-list');
+    if (!referencesList) return;
+
+    const items = referencesList.querySelectorAll('li');
+    items.forEach(item => {
+        const bibtexText = item.textContent.trim();
+        const formatted = parseBibtexEntry(bibtexText);
+        if (formatted) {
+            item.innerHTML = formatted.html;
+            item.className = 'reference-item';
+            item.id = `ref-${formatted.key}`;
+        }
+    });
+}
+
+// Parse a single bibtex entry
+function parseBibtexEntry(bibtexText) {
+    // Extract key and type
+    const typeMatch = bibtexText.match(/@(\w+)\{([^,]+)/);
+    if (!typeMatch) return null;
+
+    const [, type, key] = typeMatch;
+
+    // Extract fields
+    const fieldPattern = /(\w+)\s*=\s*\{([^}]+)\}/g;
+    const fields = {};
+    let fieldMatch;
+
+    while ((fieldMatch = fieldPattern.exec(bibtexText)) !== null) {
+        fields[fieldMatch[1].toLowerCase()] = fieldMatch[2];
+    }
+
+    // Format in academic citation style
+    let formatted = '';
+
+    // Author(s)
+    if (fields.author) {
+        formatted += `<span class="author">${fields.author}</span>. `;
+    }
+
+    // Title
+    if (fields.title) {
+        formatted += `<span class="title">${fields.title}</span>. `;
+    }
+
+    // Journal/Publication
+    if (fields.journal) {
+        formatted += `<span class="journal">${fields.journal}</span>`;
+    }
+
+    // Year
+    if (fields.year) {
+        formatted += ` <span class="year">(${fields.year})</span>`;
+    }
+
+    // Volume, number, pages if available
+    let volumeInfo = '';
+    if (fields.volume) volumeInfo += ` ${fields.volume}`;
+    if (fields.number) volumeInfo += `(${fields.number})`;
+    if (fields.pages) volumeInfo += `:${fields.pages}`;
+    if (volumeInfo) formatted += `,${volumeInfo}`;
+
+    formatted += '.';
+
+    return { key, html: formatted };
+}
+
+// Initialize footnote hover functionality
+function initializeFootnoteHover() {
+    const footnoteRefs = document.querySelectorAll('.footnote-ref');
+
+    footnoteRefs.forEach(ref => {
+        const footnoteId = ref.getAttribute('href').replace('#', '');
+        const footnoteElement = document.getElementById(footnoteId);
+
+        if (footnoteElement) {
+            // Get the footnote text content, excluding the footnote number and back reference
+            const footnoteText = footnoteElement.textContent.trim();
+            // Remove the footnote number at the beginning (e.g., "1. ")
+            const cleanText = footnoteText.replace(/^\d+\.\s*/, '').replace(/\s*↩\s*$/, '');
+
+            // Set the data attribute for the tooltip
+            ref.setAttribute('data-footnote-content', cleanText);
+        }
+    });
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Process footnotes first (replaces manual footnotes)
+    processFootnotes();
+    
+    // Process citations and references
+    processCitations();
+    formatBibtexReferences();
+    
+    // Initialize footnote hover functionality
+    initializeFootnoteHover();
+});
+</script>
+
+</body>
+</html>
